@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.pb.bts.mapper.HelpMapper">
+
+	<insert id="insertInquiry" parameterType="Help">
+		insert into member_manage(
+			mm_code,
+			mm_user,
+			mm_title,
+			mm_body
+		) values(
+			#{mmCode},
+			#{mmUser},
+			#{mmTitle},
+			#{mmBody}
+		)
+	</insert>
+	
+	<select id="myInquiry" parameterType="int" resultType="Help">
+		select
+			mm_title,
+			mm_body,
+			mm_use,
+			mm_reTitle,
+			mm_reBody,
+			mm_date
+		from
+			member_manage
+		where
+			mm_user = #{mNo}
+		order by mm_date desc
+	</select>
+	
+	
+	<select id="getTotalCnt" parameterType="Page" resultType="int">
+		SELECT
+			COUNT(mm_title)
+		from
+			member_manage AS mm,
+			member AS m
+		WHERE
+			m.m_no = mm.mm_user
+		<if test="searchValue == null">
+			and mm.mm_use = 'N'
+		</if>
+		<if test="searchValue != null">
+			<if test="category == 'name' ">
+				and m.m_name LIKE "%"#{searchValue}"%"			
+			</if>
+			<if test="category == 'use' ">
+				and mm.mm_use = #{searchValue}
+			</if>
+		</if>
+	</select>
+	
+	
+	<select id="getInquiryList" parameterType="Page" resultType="Help">
+		select
+			mm.mm_no,
+			m.m_name,
+			mm.mm_code,
+			mm.mm_title,
+			mm.mm_body,
+			mm.mm_use,
+			mm.mm_reTitle,
+			mm.mm_reBody,
+			mm.mm_date
+		from
+			member_manage AS mm,
+			member AS m
+		WHERE
+			m.m_no = mm.mm_user
+		<if test="searchValue == null">
+			and mm.mm_use = 'N'
+		</if>
+		<if test="searchValue != '' and searchValue != null">
+			<if test="category == 'name' ">
+				and
+				m.m_name LIKE "%"#{searchValue}"%"					
+			</if>
+			<if test="category == 'use' ">
+				and mm.mm_use = #{searchValue}
+			</if>
+		</if>
+		LIMIT #{nowPage}, 10;
+	</select>
+	
+	<update id="insertAnswer" parameterType="Help">
+		UPDATE member_manage SET
+			mm_reTitle = #{mmReTitle},
+			mm_reBody = #{mmReBody},
+			mm_use = "Y"
+		WHERE 
+			mm_no = #{mmNo}
+	</update>
+
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- 이 네임스페이스 지정하는것은 인터페이스 메퍼와 해당 xml을 연동시켜주기 위한 선언부분임 -->
+<mapper namespace="kr.pb.bts.mapper.TestMapper">
+
+	<!-- 쿼리문의 id값은 메소드명과 일치, 파라미터타입은 도메인(VO, DTO)클래스명과 일치시켜줘서 사용가능 -->
+	<select id="getDbList" parameterType="Test" resultType="Test">
+		SELECT
+			*
+		FROM
+			TEST
+		LIMIT #{count}
+	</select>
+	
+	
+	<select id="getBookList" parameterType="BookInfo" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_date,
+			bi_pub,
+			bi_price,
+			bi_img
+		from
+			book_info
+		limit
+			#{count}
+	</select>
+	
+	<select id="getBookCount" resultType="int">
+		select
+			count(bi_no)
+		from
+			book_info
+	</select>
+	
+	<insert id="updateBm" parameterType="BookManage">
+		insert into
+			book_manage(
+				bm_have,
+				bm_count,
+				bm_hit
+			) values(
+				#{bmHave},
+				#{bmCount},
+				#{bmHit}			
+			)
+	</insert>
+	
+	
+	<select id="getBmCount" parameterType="int" resultType="int">
+		SELECT
+			bm_count
+		FROM
+			book_manage
+		WHERE
+			bm_no = #{bmNo}
+	</select>
+	
+	<select id="getBiPrice" parameterType="int" resultType="int">
+		SELECT
+			bi_price
+		FROM
+			book_info
+		WHERE
+			bi_no = #{biNo}
+	</select>
+	
+	
+	
+	<insert id="synchData" parameterType="BookOrder">
+		INSERT INTO 
+		booK_order(
+			bo_user,
+			bo_book,
+			bo_date,
+			bo_price,
+			bo_ordercount,
+			bo_check,
+			bo_addr,
+			bo_confirm,
+			bo_name,
+			bo_phone
+		) 
+		VALUES(
+			#{boUser},
+			#{boBook},
+			STR_TO_DATE(#{boDate}, '%Y-%m-%d %H:%i:%s'),
+			#{boPrice},
+			1,
+			'Y',
+			#{boAddr},
+			STR_TO_DATE(#{boConfirm}, '%Y-%m-%d'),
+			"샘플수취인",
+			"010-9799-2571"
+		)
+	</insert>
+	
+	<select id="getAddr" parameterType="int" resultType="String">
+		select 
+			m_addr 
+		from 
+			member 
+		where 
+			m_no = #{mNo}
+	</select>
+
+</mapper>

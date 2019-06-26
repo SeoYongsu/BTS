@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+
+<mapper namespace="kr.pb.bts.mapper.ChartMapper">
+	
+	<!--주간판매1  -->
+	<select id="firstWeek"   parameterType="Chart" resultType="Chart">
+	 SELECT a.firstWeek , firstCount 
+     FROM  (SELECT dayname(bo_confirm) as firstWeek, 
+     			SUM(bo_price) AS firstCount 
+     		FROM book_order 
+     		 GROUP BY bo_confirm 
+     		  <![CDATA[
+     		 	HAVING bo_Confirm >= #{firstWeeka}
+     		 	AND bo_Confirm <= #{firstWeekb}) a   
+	   		 ]]>
+	</select>
+	
+	<!--주간판매2  -->
+	<select id = "secoundWeek"   parameterType = "Chart" resultType = "Chart">
+	 SELECT a.secoundWeek  , secoundCount 
+     FROM  (SELECT dayname(bo_confirm) AS secoundWeek, 
+     			SUM(bo_price) AS secoundCount 
+     		FROM book_order 
+     		 GROUP BY bo_confirm 
+     		  <![CDATA[
+	     		 HAVING bo_Confirm >= #{secoundWeeka} 
+	     		 AND bo_Confirm <= #{secoundWeekb}) a   
+	   		 ]]>
+	</select>
+	
+	<!--나이통계  -->
+	<select id = "ageChart" resultType="Chart">
+	SELECT 
+		floor((year(now())-year(m_birth))/10)*10 age,
+		COUNT(m_BIRTH) AS cnt
+	FROM member a 
+	WHERE m_birth!='' 
+	group by age
+	HAVING age not in('0')
+	</select>
+	
+	<!--장르별판매량  -->
+	<select id = "genreChart" resultType="Chart">
+	
+	SELECT bim.count AS count, 
+		case bim.bi_genre
+			WHEN 'a1' THEN '소설'
+			WHEN 'a2' THEN  '잡지'
+			WHEN 'a3' THEN  '만화'
+			WHEN 'a4' THEN  '종교'
+			WHEN 'a5' THEN  'it'
+			WHEN 'a6' THEN  '취미'
+			WHEN 'a7' THEN  '건강'
+			WHEN 'a8' THEN  '청소년 '
+			WHEN 'a9' THEN  '역사' 
+			WHEN 'a10' THEN '사회'
+		END
+		 AS biGenre
+	FROM
+		(SELECT SUM(bm.bm_count) as count, 
+				bi.bi_genre 
+			FROM book_info AS bi 
+			INNER JOIN book_manage AS bm 
+				WHERE bi.bi_no = bm.bm_no
+			GROUP BY bi.bi_genre)bim
+	WHERE biM.bi_genre NOT IN('a0')	
+	</select>
+	
+	<!--지역별회원  -->
+	<select id = "liveChart" resultType="Chart">
+	SELECT  m_sido, count(m_sido) AS liveCount 
+	FROM MEMBER
+		WHERE m_use = 'Y'
+	GROUP BY m_sido
+	</select>
+</mapper>
