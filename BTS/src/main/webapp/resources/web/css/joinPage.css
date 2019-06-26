@@ -1,0 +1,48 @@
+@charset "UTF-8";
+
+body{
+		background-image: url("/bts/resources/web/image/joinBackground2.jpg"); 
+		background-size: cover;
+		background-repeat: no-repeat;
+		height: 100%;
+	}
+	.contact{
+		padding: 4%;
+		height: 300px;
+	}
+	.col-md-3{
+		background: #999999;
+		padding: 4%;
+		border-top-left-radius: 0.5rem;
+		border-bottom-left-radius: 0.5rem;
+		margin-bottom: 50px;
+	}
+	.contact-info{
+		margin-top:10%;
+	}
+	.contact-info img{
+		margin-right:30%;
+		margin-bottom: 15%;
+	}
+	.contact-info h2{
+		margin-bottom: 10%;
+	}
+	.col-md-9{
+		background: #fff;
+		padding: 3%;
+		border-top-right-radius: 0.5rem;
+		border-bottom-right-radius: 0.5rem;
+		margin-bottom: 50px;
+	}
+	.contact-form label{
+		font-weight:600;
+	}
+	.contact-form button{
+		background: #9e9e9e;
+		color: #fff;
+		font-weight: 600;
+		width: 25%;
+	}
+	.contact-form button:focus{
+		box-shadow:none;
+	}

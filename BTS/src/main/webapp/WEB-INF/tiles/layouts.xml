@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+		"-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN"
+		"http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+
+<tiles-definitions>
+
+	<!-- web_template -->
+	<definition name="web_template" template="/WEB-INF/layouts/web/template.jsp">
+		<put-attribute name="header" value="/WEB-INF/layouts/web/header.jsp" />		
+		<put-attribute name="left" value="/WEB-INF/layouts/web/left.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/layouts/web/footer.jsp" />
+		<put-attribute name="content" value="" />
+	</definition>
+
+	<definition name="*.web" extends="web_template">
+		<put-attribute name="content" value="/WEB-INF/views/{1}.jsp" />
+	</definition>
+	<definition name="/web/*.web" extends="web_template">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}.jsp" />
+	</definition>
+	<definition name="/web/*/*.web" extends="web_template">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}/{2}.jsp" />
+	</definition>
+	<definition name="/web/*/*/*.web" extends="web_template">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}/{2}/{3}.jsp" />
+	</definition>
+
+	<!-- no-layouts -->
+	<definition name="default" template="/WEB-INF/layouts/web/default.jsp">
+		<put-attribute name="content" value="" />
+	</definition>
+
+	<definition name="*.jsp" extends="default">
+		<put-attribute name="content" value="/WEB-INF/views/{1}.jsp" />
+	</definition>
+
+	<definition name="/web/*.jsp" extends="default">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}.jsp" />
+	</definition>
+	
+	<definition name="/web/*/*.jsp" extends="default">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}/{2}.jsp" />
+	</definition>
+	
+	<definition name="/web/*/*/*.jsp" extends="default">
+		<put-attribute name="content" value="/WEB-INF/views/web/{1}/{2}/{3}.jsp" />
+	</definition>
+	
+
+</tiles-definitions>
