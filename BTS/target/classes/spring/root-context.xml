@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<!-- kr.pb.bts 패키지 내부의 @이 있는 클래스를 스캔하여 bean 등록 -->
+	<context:component-scan base-package="kr.pb.bts">
+		
+		<!-- 스캔대상 범위지정 부분 include(포함), exclude(미포함) -->
+		<!-- 아래기준 @Controller 이 있으면 범위에서 제외시킨다는 뜻 -->
+	<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<import resource="classpath:mybatis/mybatis-context.xml"/>	
+</beans>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.pb.bts.mapper.NoticeMapper">
+
+<!-- 공지사항 테이블
+
+		CREATE TABLE notice(
+			n_no	INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+			n_title VARCHAR(200) NOT null,
+			n_body VARCHAR(2000) NOT NULL,
+			n_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+			n_use CHAR DEFAULT 'Y')
+
+-->
+
+	<!-- 전체 레코드수 -->
+	<select id="getTotalCnt" parameterType="Page" resultType="int">
+		SELECT 
+			count(n_no)
+		FROM
+			notice
+		WHERE
+			n_use = 'Y'
+			<if test="searchValue != null">
+				and
+				n_title LIKE "%"#{searchValue}"%"
+				or
+				n_body LIKE "%"#{searchValue}"%"		
+			</if>
+	</select>
+	
+	<!-- 리스트 -->
+	<select id="getNoticeList" parameterType="Page" resultType="Notice">
+		SELECT 
+			n_no,
+			n_title,
+			n_date,
+			n_hit
+		FROM
+			notice
+		WHERE
+			n_use = 'Y'
+			<if test="searchValue != null">
+				and
+				n_title LIKE "%"#{searchValue}"%"
+				or
+				n_body LIKE "%"#{searchValue}"%"		
+			</if>
+		ORDER BY n_no desc
+		LIMIT #{nowPage}, 10
+	</select>
+	
+	<select id="getNoticeList2" resultType="Notice">
+		SELECT 
+			n_no,
+			n_title,
+			n_date
+		FROM
+			notice
+		WHERE
+			n_use = 'Y'
+		ORDER BY n_no desc
+		LIMIT 0, 5
+	</select>
+
+	<!-- 글작성 -->
+	<insert id="insertNotice" parameterType="Notice">
+		INSERT INTO notice(
+			n_title,
+			n_body
+		) VALUES(
+			#{nTitle},
+			#{nBody}
+		)
+	</insert>
+
+	<!-- 글수정 -->
+	<update id="updateNotice" parameterType="Notice">
+		UPDATE notice SET
+			n_title = #{nTitle},
+			n_body = #{nBody}
+		WHERE
+			n_no = #{nNo}
+	</update>
+	
+	<!-- 조회수 업 -->
+	<update id="updateHit" parameterType="Notice">
+		UPDATE notice SET
+			n_hit = n_hit+1
+		WHERE
+			n_no = #{nNo}
+	</update>
+	
+	<!-- 글삭제 -->
+	<update id="deleteNotice" parameterType="Notice">
+		UPDATE notice SET
+			n_use = 'N'
+		WHERE
+			n_no = #{nNo}
+	</update>
+	
+	<!-- 상세보기 -->
+	<select id="detailNotice" parameterType="Notice" resultType="Notice">
+		SELECT 
+			n_no,
+			n_title,
+			n_body,
+			n_date,
+			n_hit
+		FROM
+			notice
+		WHERE
+			n_no = #{nNo}
+	</select>
+
+
+</mapper>

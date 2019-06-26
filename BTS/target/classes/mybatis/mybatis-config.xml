@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<!-- 환경설정 -->
+<configuration>
+	<settings>
+		<!-- 
+				참고 사이트 : 참고사이트 : https://idea-sketch.tistory.com/30?category=547413 
+				참고사이트 : https://idea-sketch.tistory.com/31?category=547413
+				Second Level 캐쉬사용 설정
+				statement 실행후 commit이 된 후에도 캐쉬데이터가 살아있다.
+		-->
+		<setting name="cacheEnabled" value="true" />
+		
+		<!-- 
+				참고사이트 : https://rwd337.tistory.com/170
+				컬러명 : user_id    => userId (카멜케이스로 컬럼명을 읽어줌)
+				jsp 단에서 컬럼값을 불러올때 userId 로 쉽게 불러올 수 있게 해주는 역할
+		 -->
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	
+	<typeAliases>
+		
+		<!-- Hashmap을 쉽게 타이핑하기 위해 별칭으로 hamp 이라 지정 -->
+		<typeAlias type="java.util.HashMap" alias="hmap" />
+		
+		<!-- 
+				참고사이트 : http://www.mybatis.org/mybatis-3/ko/configuration.html#typeAliases
+				myBatis가 bean을 찾도록 패키지를 명시하는 부분 
+		-->		
+		<package name="kr.pb.bts.domain"/>
+		
+	</typeAliases>
+</configuration>

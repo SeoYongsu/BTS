@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.pb.bts.mapper.HomeMapper">
+
+	<select id="getChoice3" resultType="BookInfo">
+		SELECT 
+			bi.bi_no,
+			bi.bi_title,
+			bi.bi_writer,
+			bi.bi_info,
+			bi.bi_img
+		FROM
+			book_manage bm,
+			book_info bi
+		WHERE
+			bm.bm_use = 'Y'
+		and
+			bi.bi_use = 'Y'
+		and
+			bi.bi_no = bm.bm_no
+		ORDER BY bm.bm_hit desc
+		LIMIT 3;
+	</select>
+	
+	<select id="getBest4" resultType="BookInfo">
+		SELECT 
+			bi.bi_no,
+			bi.bi_title,
+			bi.bi_writer,
+			bi.bi_info,
+			bi.bi_img
+		FROM
+			book_manage bm,
+			book_info bi
+		WHERE
+			bm.bm_use = 'Y'
+		and
+			bi.bi_use = 'Y'
+		and
+			bi.bi_no = bm.bm_no
+		ORDER BY bm.bm_count desc
+		LIMIT 4;
+	</select>
+
+	<select id="getRecommendList" parameterType="int" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_pub,
+			bi_img
+		from 
+			book_info,
+			book_manage 
+		where 
+			bm_no=bi_no 
+			and 
+			bi_genre in 
+				(
+					select 
+						m.bi_genre
+					from 
+						book_info,
+						(
+							select 
+								bm_no,
+								bi_genre,
+								count(bi_genre) as cnt 
+							from 
+								book_manage, 
+								book_info 
+							where 
+								bm_no = bi_no 
+								and 
+								bm_no 
+									in 
+								(
+									select 
+										bo_book 
+									from 
+										book_order 
+									where bo_user = #{mNo}
+								)
+							group by bi_genre
+							order by cnt desc limit 3
+						) m
+					where bi_no = m.bm_no
+				)
+		order by bm_hit desc limit 4
+	</select>
+	
+	<select id="getUserName" parameterType="int" resultType="String">
+		select
+			m_name
+		from
+			member
+		where
+			m_no = #{mNo}
+	</select>
+	
+	<!-- 용수 -->
+	<select id="getRealtime" resultType="bookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_pub,
+			bi_img,
+			count(bi_no) as cnt,
+			now() as now
+		from 
+			book_info,
+			(
+				select 
+					SUBSTRING_INDEX(argument,'=', -1) as bm_no 
+				from 
+					mysql.general_log
+				where 
+					event_time >= DATE_SUB(now(),INTERVAL 1 hour)
+					and 
+					argument like 'Update %bm_hit%'
+			) l
+		where 
+			l.bm_no = bi_no 
+		group by 
+			bi_no 
+		order by 
+			cnt desc, bi_date desc, bi_price desc
+		limit 5
+	
+	</select>
+	
+	
+	
+	<select id="getWeekly5" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_img 
+		from 
+			book_info,
+			(
+				select 
+					bm_no,
+					bo_confirm,
+					count(bm_no) as cnt 
+				from 
+					book_manage,
+					book_order 
+				where 
+					bm_no = bo_book 
+					and 
+					(
+						bo_confirm <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL 7 DAY) 
+						and 
+						bo_confirm <![CDATA[<]]> now()
+					)
+					and 
+					bo_check = 'Y'
+					and 
+					bm_use = 'Y'
+				group by bm_no
+			) r 
+		where 
+			bi_no = r.bm_no 
+		order by 
+			r.cnt desc, bi_date desc 
+		limit 5
+	</select>
+	
+	<select id="getDay5" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_img 
+		from 
+			book_info,
+			(
+				select 
+					bm_no,
+					bo_confirm,
+					count(bm_no) as cnt 
+				from 
+					book_manage,
+					book_order 
+				where 
+					bm_no = bo_book 
+					and 
+					(
+						bo_confirm <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL 1 DAY) 
+						and 
+						bo_confirm <![CDATA[<]]> now()
+					)
+					and 
+					bo_check = 'Y'
+					and 
+					bm_use = 'Y'
+				group by bm_no
+			) r 
+		where 
+			bi_no = r.bm_no 
+		order by 
+			r.cnt desc, bi_date desc 
+		limit 10
+	</select>
+	
+	<select id="getSilgum" resultType="BookInfo">
+		select 
+			SUBSTRING_INDEX(SUBSTRING_INDEX(argument, "'",-2),"'",1) as searchValue,
+			count(argument) as count
+		from mysql.general_log 
+		where 
+			argument like 'select%count(bi_no)%book_info%bi_title%"' 
+		and 
+			event_time > DATE_SUB(now(),INTERVAL 1 hour)
+		group by 
+			searchValue 
+		order by count desc 
+		limit 5
+	</select>
+</mapper>

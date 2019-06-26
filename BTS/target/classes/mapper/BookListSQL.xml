@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- 이 네임스페이스 지정하는것은 인터페이스 메퍼와 해당 xml을 연동시켜주기 위한 선언부분임 -->
+<mapper namespace="kr.pb.bts.mapper.BookListMapper">
+	
+	<!-- New book Cnt -->
+	<select id="getNewCnt" parameterType="Page" resultType="int">
+		select 
+			count(bi_no) as count,
+			now() as now 
+		from 
+			book_info 
+		where 
+			bi_date <![CDATA[>]]> DATE_SUB(now(),INTERVAL 1 month)
+			and
+			bi_date <![CDATA[<]]> now()
+			
+	</select>
+	
+	<select id="getNew" parameterType="Page" resultType="BookInfo">
+	select 
+			i.bi_no,
+			i.bi_genre,
+			i.bi_title,
+			i.bi_writer,
+			i.bi_info,
+			i.bi_date,
+			i.bi_pub,
+			i.bi_price,
+			i.bi_img,
+			r.avg,
+			r.count,
+			now() as now
+		from 
+			book_info i,
+			(
+				select 
+					bi_no,
+					avg(br_sco) as avg,
+					count(br_rno) as count
+				from 
+					book_info 
+				LEFT join 
+					book_review
+				on 
+					br_rno = bi_no
+				group by bi_no
+			) r
+		where 
+			i.bi_no = r.bi_no 
+			and
+			(
+				bi_date <![CDATA[>]]> DATE_SUB(now(),INTERVAL 1 month)
+				and
+				bi_date <![CDATA[<]]> now() 
+			)
+			order by bi_date desc
+			limit #{nowPage},10
+	</select>
+	
+	
+	<!-- Bestbook -->
+	<select id="getBest100" parameterType="Page" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_date,
+			bi_pub,
+			bi_price,
+			bi_img,
+			i.avg,
+			i.count
+		from 
+			book_manage,
+			(
+			select 
+				i.bi_no,
+				i.bi_genre,
+				i.bi_title,
+				i.bi_writer,
+				i.bi_info,
+				i.bi_date,
+				i.bi_pub,
+				i.bi_price,
+				i.bi_img,
+				r.avg,
+				r.count
+			from 
+				book_info i,
+				(
+					select 
+						bi_no,
+						avg(br_sco) as avg,
+						count(br_rno) as count
+					from 
+						book_info 
+					LEFT join 
+						book_review
+					on 
+						br_rno = bi_no
+					group by bi_no
+				) r
+			where 
+				i.bi_no = r.bi_no
+			) i
+		where i.bi_no = bm_no
+		
+		order by bm_count desc, i.bi_date desc 
+		limit #{nowPage}, 10
+	</select>
+
+	<!-- 리스트 검색별 카운트 처리 -->
+	<select id="getSearchCnt" parameterType="Page" resultType="int">
+		select
+			count(bi_no) 
+		from
+			book_info
+		where 
+			bi_title like "%"#{searchValue}"%"
+			or
+			bi_writer like "%"#{searchValue}"%"
+			or
+			bi_pub like "%"#{searchValue}"%"
+	</select>
+	
+	<!-- 리스트 검색별 처리 -->
+	<select id="getSearchList" parameterType="Page" resultType="BookInfo">
+		select 
+			i.bi_no,
+			i.bi_genre,
+			i.bi_title,
+			i.bi_writer,
+			i.bi_info,
+			i.bi_date,
+			i.bi_pub,
+			i.bi_price,
+			i.bi_img,
+			r.avg,
+			r.count
+		from 
+			book_info i,
+			(
+				select 
+					bi_no,
+					avg(br_sco) as avg,
+					count(br_rno) as count
+				from 
+					book_info 
+				LEFT join 
+					book_review
+				on 
+					br_rno = bi_no
+				group by bi_no
+			) r
+		where 
+			i.bi_no = r.bi_no
+			and 
+			(bi_title like "%"#{searchValue}"%"
+			or
+			bi_writer like "%"#{searchValue}"%"
+			or
+			bi_pub like "%"#{searchValue}"%") 
+		order by i.bi_no desc 
+		limit #{nowPage},10
+	</select>
+	
+	
+	
+	
+	<!-- 리스트 장르별 카운트 처리 -->
+	<select id="getTotalCnt" parameterType="Page" resultType="int">
+		select 
+			count(bi_no) as cnt
+		from 
+			book_info 
+		where 
+			bi_genre = #{biGenre}
+
+	</select>
+	
+	<!-- 리스트 -->
+	<select id="getBookList" parameterType="Page" resultType="BookInfo">	
+		select 
+			i.bi_no,
+			i.bi_genre,
+			i.bi_title,
+			i.bi_writer,
+			i.bi_info,
+			i.bi_date,
+			i.bi_pub,
+			i.bi_price,
+			i.bi_img,
+			r.avg,
+			r.count
+		from 
+			book_info i,
+			(
+				select 
+					bi_no,
+					avg(br_sco) as avg,
+					count(br_rno) as count
+				from 
+					book_info 
+				LEFT join 
+					book_review
+				on 
+					br_rno = bi_no
+				group by bi_no
+			) r
+		where 
+			i.bi_no = r.bi_no 
+		and 
+			i.bi_genre = #{biGenre} 
+		order by i.bi_no desc
+		limit #{nowPage},10
+	</select>
+	
+	<!-- 유저별로 추천상품 불러주는 쿼리... -->
+	<select id="getBookBestList" parameterType="Page" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_date,
+			bi_pub,
+			bi_price,
+			bi_img
+		from 
+			book_info,
+			book_manage 
+		where 
+			bm_no=bi_no 
+			and 
+			bi_genre in 
+				(
+					select 
+						m.bi_genre
+					from 
+						book_info,
+						(
+							select 
+								bm_no,
+								bi_genre,
+								count(bi_genre) as cnt 
+							from 
+								book_manage, 
+								book_info 
+							where 
+								bm_no = bi_no 
+								and 
+								bm_no 
+									in 
+								(
+									select 
+										bo_book 
+									from 
+										book_order 
+									where bo_user = #{boUser}
+								)
+							group by bi_genre
+							order by cnt desc limit 3
+						) m
+					where bi_no = m.bm_no
+				)
+		order by bm_hit desc limit 5
+	</select>
+	
+	<!-- 용수 -->
+	<select id="getWeekly" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_img 
+		from 
+			book_info,
+			(
+				select 
+					bm_no,
+					bo_confirm,
+					count(bm_no) as cnt 
+				from 
+					book_manage,
+					book_order 
+				where 
+					bm_no = bo_book 
+					and 
+					(
+						bo_confirm <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL 7 DAY) 
+						and 
+						bo_confirm <![CDATA[<]]> now()
+					)
+					and 
+					bo_check = 'Y'
+					and 
+					bm_use = 'Y'
+				group by bm_no
+			) r 
+		where 
+			bi_no = r.bm_no 
+		order by 
+			r.cnt desc, bi_date desc 
+		limit 10
+	</select>
+	
+	<select id="getDay" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_img 
+		from 
+			book_info,
+			(
+				select 
+					bm_no,
+					bo_confirm,
+					count(bm_no) as cnt 
+				from 
+					book_manage,
+					book_order 
+				where 
+					bm_no = bo_book 
+					and 
+					(
+						bo_confirm <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL 1 DAY) 
+						and 
+						bo_confirm <![CDATA[<]]> now()
+					)
+					and 
+					bo_check = 'Y'
+					and 
+					bm_use = 'Y'
+				group by bm_no
+			) r 
+		where 
+			bi_no = r.bm_no 
+		order by 
+			r.cnt desc, bi_date desc 
+		limit 10
+	</select>
+	
+	<select id="getMonth" resultType="BookInfo">
+	select 
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_img,
+			r.bo_confirm 
+		from 
+			book_info,
+			(
+				select 
+					bm_no,
+					bo_confirm,
+					count(bm_no) as cnt 
+				from 
+					book_manage,
+					book_order 
+				where 
+					bm_no = bo_book 
+					and 
+					(
+						bo_confirm <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL 1 DAY) 
+						and 
+						bo_confirm <![CDATA[<]]> now()
+					)
+					and 
+					bo_check = 'Y'
+					and 
+					bm_use = 'Y'
+				group by bm_no
+			) r 
+		where 
+			bi_no = r.bm_no 
+		order by 
+			r.cnt desc, bi_date desc 
+		limit 10
+	</select>
+	
+	<select id="getRealTime" resultType="BookInfo">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_pub,
+			bi_img,
+			count(bi_no) as cnt,
+			now() as now
+		from 
+			book_info,
+			(
+				select 
+					SUBSTRING_INDEX(argument,'=', -1) as bm_no 
+				from 
+					mysql.general_log
+				where 
+					event_time >= DATE_SUB(now(),INTERVAL 1 hour)
+					and 
+					argument like 'Update %bm_hit%'
+			) l
+		where 
+			l.bm_no = bi_no 
+		group by 
+			bi_no 
+		order by 
+			cnt desc, bi_date desc, bi_price desc
+		limit 10
+	</select>
+
+
+</mapper>

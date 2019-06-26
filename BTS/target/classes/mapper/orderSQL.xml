@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- 이 네임스페이스 지정하는것은 인터페이스 메퍼와 해당 xml을 연동시켜주기 위한 선언부분임 -->
+<mapper namespace="kr.pb.bts.mapper.OrderMapper">
+
+	<!-- 쿼리문의 id값은 메소드명과 일치, 파라미터타입은 도메인(VO, DTO)클래스명과 일치시켜줘서 사용가능 -->	
+	
+	<!-- 책 조회수 증가하기 -->
+	<update id="updateHit" parameterType="BookOrder">
+		UPDATE book_manage
+		SET bm_hit=bm_hit+1
+		WHERE bm_no=#{biNo}
+	</update>
+	
+	<!-- 책 상세정보 가져오기 -->
+	<select id="getDetail" parameterType="BookOrder" resultType="BookOrder">
+		select 
+			bi_no,
+			bi_genre,
+			bi_title,
+			bi_writer,
+			bi_info,
+			bi_date,
+			bi_pub,
+			bi_price,
+			bi_img,
+			bm_have,
+		  	bm_count,
+		  	bm_sale
+		from
+		  	book_info,book_manage
+		where
+		  	bi_no=#{biNo}
+		and
+			bm_no=bi_no
+	</select>
+	
+	<!-- 구매자 정보 가져오기 -->
+	<select id="getUserInfo" parameterType="BookOrder" resultType="BookOrder">
+		select
+		  m_no,
+		  m_name,
+		  m_id,
+		  m_phone,
+		  m_addr
+		from
+		  member
+		where
+		  m_no=#{mNo}	
+	</select>	
+
+	<!-- 주문내역 DB에 등록 -->
+	<insert id="insertOrder" parameterType="BookOrder">
+		insert into
+			book_order
+			(bo_user,
+			bo_book,
+			bo_price,
+			bo_ordercount,
+			bo_check,
+			bo_addr,
+			bo_name,
+			bo_phone)
+		values
+			(#{boUser},
+			#{boBook},
+			#{boPrice},
+			#{boOrdercount},
+			'W',
+			#{boAddr},
+			#{boName},
+			#{boPhone})
+	</insert>
+	
+	<!-- 주문내역 재고에 반영 -->
+	<update id="updateManage" parameterType="BookOrder">
+		update
+			book_manage
+		set 
+			bm_have=bm_have-1,
+			bm_count=bm_count+1
+		where
+			bm_no=#{boBook};
+	</update>
+	
+	
+ 	<!-- 주문내역 가져오기 -->
+	<select id="getOrder" parameterType="BookOrder" resultType="BookOrder">
+		select
+			bi_no,
+			bi_title,
+			bi_writer,
+			bi_img,
+			bo_no,
+			bo_user,
+			bo_book,
+			bo_date,
+			bo_price,
+			bo_ordercount,
+			bo_check,
+			bo_addr,
+			bo_confirm,
+			bo_name,
+			bo_phone
+		from
+			book_order,
+			book_info
+		where
+			bo_user=#{boUser}
+		and
+			bi_no=bo_book
+		and
+			date(bo_date)=date(now())	
+		and
+			bo_check!='N'
+		order by
+		  bo_no desc
+	</select>
+	
+	<!-- 구매확정 DB에 반영 -->
+	<update id="fixOrder" parameterType="BookOrder">
+		update 
+			book_order
+		set
+			bo_check='Y',
+			bo_confirm=curdate()
+		where
+			bo_no=#{boNo}
+	</update>
+	
+	<!-- 구매취소 DB에 반영 -->
+	<update id="cancelOrder" parameterType="BookOrder">
+		update
+			book_order 
+		set
+			bo_check='N',
+			bo_confirm=null
+		where
+			bo_no=#{boNo}
+	</update>
+	
+	<!-- 리뷰 등록 -->
+	<insert id="insertReview">
+		insert into
+			book_review
+				(br_rno,
+				br_mno,
+				br_sco,
+				br_re)
+		values
+			(#{biNo},
+			#{brMno},
+			#{brSco},
+			#{brRe})		
+	</insert>
+	
+	<!-- 상세보기에서 해당 책의 리뷰 불러오기 -->
+	<select id="getReview" parameterType="BookOrder" resultType="BookOrder">
+		select
+			br_rno,
+			br_mno,
+			br_sco,
+			br_re,
+			br_date,
+			m_no,
+			m_id
+		from
+			book_review,member
+		where
+			br_rno=#{biNo}
+			and
+			br_mno=m_no
+			and
+			br_use='Y'
+	</select>
+	
+ 	<!-- 유저가 이미 이 책을 구매하였는지 구매 확정여부(bo_check)로 확인 -->
+	<select id="getBuyFact" parameterType="BookOrder" resultType="int">
+		select
+			exists
+			(select 
+				bo_user
+			from
+				book_order
+			where
+				bo_user=#{mNo}
+				and
+				bo_book=#{biNo}
+				and
+				bo_check='Y')
+			as success
+	</select>
+	
+	<!-- 유저가 이 책에 리뷰를 작성하였는지 여부 확인 삭제한 리뷰는 안 쓴 것으로 간주-->
+	<select id="getReviewFact" parameterType="BookOrder" resultType="int">
+		select
+			exists
+			(select
+				br_mno
+			from
+				book_review
+			where
+				br_mno=#{mNo}
+				and
+				br_rno=#{biNo}
+				and
+				br_use='Y')
+			as success
+	</select>
+	
+	<!-- 리뷰 삭제(br_use->'N'으로 바꾸기-->
+	<update id="deleteReview" parameterType="BookOrder">
+		update
+			book_review
+		set
+			br_use='N'
+		where
+			br_mno=#{mNo}
+			and
+			br_rno=#{biNo}
+			and
+			br_use='Y'
+	</update>
+	
+	<!-- 리뷰 수정 위해 리뷰 정보 가져오기 -->
+	<select id="changeReview" parameterType="BookOrder" resultType="BookOrder">
+		select
+			br_rno,
+			br_mno,
+			br_sco,
+			br_re,
+			br_date
+		from
+			book_review
+		where
+			br_mno=#{mNo}
+			and
+			br_rno=#{biNo}
+			and
+			br_use='Y'
+	</select>
+	
+	<!-- 리뷰 내용 수정        -->
+	<update id="changeReviewProc" parameterType="BookOrder">
+		update
+			book_review
+		set
+			br_sco=#{brSco},
+			br_re=#{brRe}
+		where
+			br_mno=#{mNo}
+			and
+			br_rno=#{biNo}
+			and
+			br_use='Y'
+	</update>
+</mapper>

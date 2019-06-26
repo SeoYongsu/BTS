@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- 이 네임스페이스 지정하는것은 인터페이스 메퍼와 해당 xml을 연동시켜주기 위한 선언부분임 -->
+<mapper namespace="kr.pb.bts.mapper.MemberMapper">
+
+	<sql id="memberSearchField">
+		<if test="category eq 'userName'">
+			m_name LIKE CONCAT('%',#{searchValue},'%')
+		</if> 
+		<if test="category eq 'userId'">
+			m_id LIKE CONCAT('%',#{searchValue},'%')
+		</if> 
+		<if test="category eq 'userPhone'">
+			m_phone LIKE CONCAT('%',#{searchValue},'%')
+		</if> 
+	</sql>
+	
+	<sql id="orderSearchField">
+		<if test="category eq 'userNo'">
+			bo_user = #{searchValue} 
+		</if> 
+		<if test="category eq 'orderNo'">
+			bo_no = #{searchValue} 
+		</if>
+		<if test="category eq 'userName'">
+			bo_name LIKE CONCAT('%',#{searchValue},'%') 
+		</if> 
+		<if test="category eq 'userPhone'">
+			bo_phone LIKE CONCAT('%',#{searchValue},'%') 
+		</if>
+		<if test="category eq 'userDate'">
+			bo_date = #{searchValue} 
+		</if>
+	</sql>
+	
+	<!-- 쿼리문의 id값은 메소드명과 일치, 파라미터타입은 도메인(VO, DTO)클래스명과 일치시켜줘서 사용가능 -->
+	
+	<!-- 회원가입 -->
+	<insert id="memberJoinProc" parameterType="Member" >
+		INSERT INTO member
+		( m_name, m_id, m_mail, m_pw,
+		 m_phone, m_addr, m_birth, m_sido )
+		VALUES(
+		#{mName}, #{mId}, #{mMail}, #{mPw}, 
+		#{mPhone}, #{mAddr}, #{mBirth}, #{mSido}	)
+	</insert>
+	
+	<!-- 아이디 중복확인 -->
+	<select id="idCheck" parameterType="String" resultType="int">
+		SELECT count(m_no)
+		FROM member
+		WHERE m_id = #{mId}
+	</select>
+	
+	<!-- 로그인 -->
+	<select id="memberLoginProc" parameterType="java.util.HashMap"  
+	         resultType="java.util.HashMap">
+        SELECT 
+			m_no, 
+			m_id,   
+        	m_grade 
+		FROM member 
+		WHERE 
+				m_id = #{mId} 
+				AND 
+				m_pw = #{mPw}  
+				AND
+				m_use = 'Y'
+    </select>
+    
+    <!-- 마이페이지 -->
+    <select id="myPage" parameterType="int"  
+	         resultType="Member">
+        SELECT 
+			m_name, m_id, m_mail, 
+		 	m_phone, m_addr, m_birth, m_sido, m_use 
+		FROM member 
+		WHERE 
+				m_no = #{mNo} 
+    </select>
+    
+    <!-- 마이페이지 수정 -->
+    <update id="updateMyPage" parameterType="java.util.HashMap"  >
+    	UPDATE 
+    		member 
+    	SET 
+    		m_mail = #{mMail},   
+		 	m_phone = #{mPhone}, 
+		 	m_addr = #{mAddr}, 
+		 	m_sido = #{mSido}, 
+		 	m_use = #{mUse} 
+    	WHERE
+    		m_no = #{mNo}
+    </update>
+    
+    <select id="myPw" parameterType="Member" resultType="Member">
+    	SELECT m_no, m_id  
+    	FROM member
+    	WHERE 
+    		m_no = #{mNo} 
+    		AND 
+    		m_pw = #{mPw} 
+    </select>
+    
+    <update id="myPwProc" parameterType="Member">
+    	UPDATE 
+    		member 
+    	SET 
+    		m_pw = #{mPw} 
+    	WHERE 
+    		m_no = #{mNo} 
+    </update>
+    
+    <!-- 진행중인 주문보기 -->
+    <select id="myOrder" parameterType="int"  
+	         resultType="BookOrder">
+	         SELECT 
+	         	bo_no, 
+	         	bo_user, 
+	         	bo_book, 
+	         	bo_date, 
+	         	bo_price, 
+	         	bo_ordercount, 
+	         	bo_check, 
+	         	
+	         	bo_addr, 
+	         	bo_confirm, 
+	         	bo_name, 
+	         	bo_phone
+	         FROM book_order
+	         WHERE bo_user = #{no} AND bo_check='W' 
+	         ORDER BY bo_date desc 
+	         LIMIT #{nowPage}, 10; 
+    </select>
+    
+    <!-- 구매확정 -->
+    <update id="buyConfirm" parameterType="int">
+    	UPDATE 
+    		book_order 
+    	SET 
+    		bo_check = 'Y' 
+    	WHERE
+    		bo_no = #{boNo}
+    </update>
+    
+    <!-- 구매취소 -->
+    <update id="buyCancel" parameterType="int">
+    	UPDATE 
+    		book_order 
+    	SET 
+    		bo_check = 'N'
+    	WHERE
+    		bo_no = #{boNo}
+    </update>
+    
+    <!-- 구매목록 보기 -->
+    <select id="buyList" parameterType="int"  
+	         resultType="BookOrder">
+	         SELECT 
+	         	bo_user, 
+	         	bo_book, 
+	         	bo_date, 
+	         	bo_price, 
+	         	bo_ordercount, 
+	         	bo_check, 
+	         	bo_addr, 
+	         	bo_confirm, 
+	         	bo_name, 
+	         	bo_phone
+	         FROM book_order
+	         WHERE bo_user = #{no} AND bo_check='Y' 
+	         ORDER BY bo_date desc 
+	         LIMIT #{nowPage}, 10;
+    </select>
+    
+    <!-- 회원리스트 보기 -->
+    <select id="memberList" parameterType="Page" resultType="Member">
+    	SELECT 
+    		m_no, 
+    		m_use, 
+			m_name, 
+			m_id, 
+			m_mail, 
+			m_phone, 
+			m_addr, 
+			m_joindate, 
+			m_birth, 
+			m_sido   
+		FROM 
+			member 
+		<if test="searchValue != '' and searchValue != null">
+			WHERE 
+		<include refid="memberSearchField"/>
+		</if>
+		ORDER BY m_joindate desc 
+		LIMIT #{nowPage}, 10;
+    </select>
+    
+    <!-- 회원상세 정보보기 -->
+    <select id="memberDetail" parameterType="int" resultType="Member">
+    SELECT 
+			m_no, m_name, m_id, m_mail, 
+		 	m_phone, m_addr, m_birth, m_sido,
+		 	m_grade, m_joindate, m_use 
+	FROM member 
+	WHERE 
+				m_no = #{userNo} 
+    </select>
+    
+    <!-- 회원정보 수정 -->
+    <update id="updateMember" parameterType="java.util.HashMap"  >
+    	UPDATE 
+    		member 
+    	SET 
+    		m_name = #{mName}, 
+    		m_id = #{mId}, 
+    		m_mail = #{mMail},   
+		 	m_phone = #{mPhone}, 
+		 	m_addr = #{mAddr}, 
+		 	m_sido = #{mSido}, 
+		 	m_use = #{mUse} 
+    	WHERE
+    		m_no = #{mNo}
+    </update>
+    
+    <!-- 모든주문정보 보기 -->
+    <select id="orderList" parameterType="Page"  
+	         resultType="BookOrder">
+	         SELECT 
+	         	bo.bo_no, 
+	         	bo.bo_user, 
+	         	bo.bo_book, 
+	         	bo.bo_date, 
+	         	bo.bo_price, 
+	         	bo.bo_ordercount, 
+	         	bo.bo_check, 
+	         	bo.bo_addr, 
+	         	bo.bo_confirm, 
+	         	bo.bo_name, 
+	         	bo.bo_phone, 
+	         	bi.bi_title, 
+	         	mb.m_name 
+	         FROM book_order bo, book_info bi, member mb  
+			 WHERE 
+			 	bo.bo_book = bi.bi_no
+			 	AND
+			 	bo.bo_user = mb.m_no 
+	         <if test="searchValue != '' and searchValue != null">
+	         	AND
+				<if test="category eq 'userNo'">
+					bo.bo_user = #{searchValue} 
+				</if> 
+				<if test="category eq 'orderNo'">
+					bo.bo_no = #{searchValue} 
+				</if>
+				<if test="category eq 'userName'">
+					bo.bo_name LIKE CONCAT('%',#{searchValue},'%') 
+				</if> 
+				<if test="category eq 'userPhone'">
+					bo.bo_phone LIKE CONCAT('%',#{searchValue},'%') 
+				</if>
+				<if test="category eq 'userDate'">
+					bo.bo_date = #{searchValue} 
+				</if>
+			</if>
+			ORDER BY bo_date desc 
+	         LIMIT #{nowPage}, 10;
+    </select>
+    
+    <!-- 모든회원 리스트 페이징처리  -->
+    <select id="getMemberTotalCnt" parameterType="Page" resultType="int">
+    	SELECT count(m_no)
+    	FROM member
+    	<if test="searchValue != '' and searchValue != null">
+    	WHERE
+    		<include refid="memberSearchField"/>
+    	</if>
+    </select>
+    
+    <!-- 모든회원 주문리스트 페이징처리  -->
+    <select id="getOrderTotalCnt" parameterType="Page" resultType="int">
+    	SELECT count(bo_no) 
+    	FROM book_order 
+    	<if test="searchValue != '' and searchValue != null">
+    	WHERE 
+    		<if test="category eq 'userNo'">
+				bo_user = #{searchValue} 
+			</if> 
+			<if test="category eq 'orderNo'">
+				bo_no = #{searchValue} 
+			</if>
+			<if test="category eq 'userName'">
+				bo_name LIKE CONCAT('%',#{searchValue},'%') 
+			</if> 
+			<if test="category eq 'userPhone'">
+				bo_phone LIKE CONCAT('%',#{searchValue},'%') 
+			</if>
+			<if test="category eq 'userDate'">
+				bo_date = #{searchValue} 
+			</if>
+    	</if>
+    </select>
+
+    <!-- 내 구매목록 페이징처리  -->
+    <select id="getBuyListTotalCnt" parameterType="Page" resultType="int">
+    	SELECT count(bo_no)
+    	FROM book_order
+    	WHERE
+    		bo_user = #{no} AND bo_check='Y'
+    </select>
+    
+    <!-- 내 주문목록 페이징처리  -->
+    <select id="getMyOrderTotalCnt" parameterType="Page" resultType="int">
+    	SELECT count(bo_no)
+    	FROM book_order
+    	WHERE
+    		bo_user = #{no} AND bo_check='W'
+    </select>
+    
+    <!-- 회원가입 -->
+	<insert id="sampledata" parameterType="Member" >
+		INSERT INTO member
+		( m_no, m_name, m_id, m_mail, m_pw,
+		 m_phone, m_addr, m_birth, m_sido )
+		VALUES(
+		#{mNo}, 
+		#{mName}, #{mId}, #{mMail}, #{mPw}, 
+		#{mPhone}, #{mAddr}, #{mBirth}, #{mSido}	)
+	</insert>
+	
+	<!-- 아이디찾기 -->
+    <select id="findIdProc" parameterType="Member" resultType="Member">
+    	SELECT 
+    		m_id 
+    	FROM 
+    		member
+    	WHERE
+    		m_name = #{mName}
+    		AND
+    		m_phone = #{mPhone}
+    </select>
+    <!-- 비밀번호찾기 -->
+    <select id="findPwProc" parameterType="Member" resultType="Member">
+    	SELECT 
+    		m_pw 
+    	FROM 
+    		member
+    	WHERE
+    		m_name = #{mName}
+    		AND
+    		m_id = #{mId} 
+    </select>
+    
+</mapper>
